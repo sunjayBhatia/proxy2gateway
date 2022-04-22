@@ -1,0 +1,14 @@
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: basic-tls
+spec:
+  parentRefs:
+  - name: basic-tls
+    group: gateway.networking.k8s.io
+    kind: Gateway 
+  rules:
+  - backendRefs:
+    - name: s1
+      port: 80
