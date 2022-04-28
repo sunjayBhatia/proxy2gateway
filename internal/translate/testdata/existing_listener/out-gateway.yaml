@@ -1,0 +1,20 @@
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: Gateway
+metadata:
+  name: existing-listener
+spec:
+  gatewayClassName: contour
+  listeners:
+  - name: http
+    port: 80
+    protocol: HTTP
+    hostname: existing.com
+  - name: http-other
+    port: 80
+    protocol: HTTP
+    hostname: existing-2.com
+  - name: http-2
+    port: 80
+    protocol: HTTP
+    hostname: new.com

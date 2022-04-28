@@ -4,6 +4,10 @@ kind: HTTPRoute
 metadata:
   name: basic
 spec:
+  parentRefs:
+  - name: basic-http
+    group: gateway.networking.k8s.io
+    kind: Gateway
   rules:
   - matches:
     - path:

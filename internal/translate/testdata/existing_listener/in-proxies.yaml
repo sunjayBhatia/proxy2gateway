@@ -1,0 +1,28 @@
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: new
+spec:
+  virtualhost:
+    fqdn: new.com
+  routes:
+  - conditions:
+    - prefix: /
+    services:
+    - name: s1
+      port: 80
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: existing-2
+spec:
+  virtualhost:
+    fqdn: existing-2.com
+  routes:
+  - conditions:
+    - prefix: /
+    services:
+    - name: s2
+      port: 80

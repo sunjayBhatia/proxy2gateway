@@ -1,0 +1,7 @@
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: Gateway
+metadata:
+  name: basic-http
+spec:
+  gatewayClassName: contour

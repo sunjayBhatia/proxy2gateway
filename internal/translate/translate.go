@@ -14,6 +14,8 @@
 package translate
 
 import (
+	"fmt"
+
 	contour_api_v1 "github.com/projectcontour/contour/apis/projectcontour/v1"
 	"github.com/sirupsen/logrus"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -72,8 +74,8 @@ func HTTPProxiesToGatewayResources(log logrus.FieldLogger, baseGateway *gatewaya
 
 			tlsRoutes = append(tlsRoutes, route)
 
-			outGateway.Spec.Listeners = append(outGateway.Spec.Listeners, gatewayapi_v1alpha2.Listener{
-				Name:     "tls",
+			outGateway.Spec.Listeners = addListener(outGateway.Spec.Listeners, gatewayapi_v1alpha2.Listener{
+				Name:     gatewayapi_v1alpha2.SectionName(fmt.Sprintf("tls-%d", len(outGateway.Spec.Listeners))),
 				Port:     gatewayapi_v1alpha2.PortNumber(443),
 				Protocol: gatewayapi_v1alpha2.TLSProtocolType,
 				Hostname: listenerHostnamePtr(proxy.Spec.VirtualHost.Fqdn),
@@ -130,6 +132,13 @@ func HTTPProxiesToGatewayResources(log logrus.FieldLogger, baseGateway *gatewaya
 			}
 
 			httpRoutes = append(httpRoutes, route)
+
+			outGateway.Spec.Listeners = addListener(outGateway.Spec.Listeners, gatewayapi_v1alpha2.Listener{
+				Name:     gatewayapi_v1alpha2.SectionName(fmt.Sprintf("http-%d", len(outGateway.Spec.Listeners))),
+				Port:     gatewayapi_v1alpha2.PortNumber(80),
+				Protocol: gatewayapi_v1alpha2.HTTPProtocolType,
+				Hostname: listenerHostnamePtr(proxy.Spec.VirtualHost.Fqdn),
+			})
 		}
 	}
 	return outGateway, httpRoutes, tlsRoutes, nil
@@ -186,4 +195,33 @@ func commonRouteSpecFromGateway(gw *gatewayapi_v1alpha2.Gateway) gatewayapi_v1al
 	}
 
 	return crs
+}
+
+// Adds a listener if no existing listener matches the requirements for the HTTPProxy.
+func addListener(existingListeners []gatewayapi_v1alpha2.Listener, newListener gatewayapi_v1alpha2.Listener) []gatewayapi_v1alpha2.Listener {
+	for _, l := range existingListeners {
+		protocolsMatch := l.Protocol == newListener.Protocol
+		portsMatch := l.Port == newListener.Port
+		hostnamesMatch := (l.Hostname == nil && newListener.Hostname == nil) ||
+			(l.Hostname != nil && newListener.Hostname != nil && *l.Hostname == *newListener.Hostname)
+		// TODO: this is incomplete, need to assess if the TLS fields match
+		if protocolsMatch && portsMatch && hostnamesMatch {
+			return existingListeners
+		}
+	}
+	newListener.Name = listenerName(newListener.Protocol, len(existingListeners))
+	return append(existingListeners, newListener)
+}
+
+func listenerName(protocol gatewayapi_v1alpha2.ProtocolType, index int) gatewayapi_v1alpha2.SectionName {
+	var prefix string
+	switch protocol {
+	case gatewayapi_v1alpha2.HTTPProtocolType:
+		prefix = `http-%d`
+	case gatewayapi_v1alpha2.HTTPSProtocolType:
+		prefix = `https-%d`
+	case gatewayapi_v1alpha2.TLSProtocolType:
+		prefix = `tls-%d`
+	}
+	return gatewayapi_v1alpha2.SectionName(fmt.Sprintf(prefix, index))
 }

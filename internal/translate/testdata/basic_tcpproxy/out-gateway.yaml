@@ -6,7 +6,7 @@ metadata:
 spec:
   gatewayClassName: contour
   listeners:
-  - name: tls
+  - name: tls-0
     port: 443
     protocol: TLS
     hostname: foo-basic-tls.bar.com

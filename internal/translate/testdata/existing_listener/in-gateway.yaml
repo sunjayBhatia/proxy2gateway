@@ -2,11 +2,15 @@
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: Gateway
 metadata:
-  name: basic-http
+  name: existing-listener
 spec:
   gatewayClassName: contour
   listeners:
-  - name: http-0
+  - name: http
     port: 80
     protocol: HTTP
-    hostname: foo-basic.bar.com
+    hostname: existing.com
+  - name: http-other
+    port: 80
+    protocol: HTTP
+    hostname: existing-2.com
